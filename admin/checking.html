@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car and Parcel Details - CTS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #08600b;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        .car-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .car-container h3 {
+            margin: 0 0 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        table th {
+            background-color: #08600b;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Manager Portal</h1>
+        <h2>Car and Parcel Details</h2>
+    </header>
+    <div class="container" id="carDetailsContainer">
+        <!-- Car Details with Parcels will be dynamically populated -->
+    </div>
+
+    <script>
+        // Sample data for cars and parcels
+        const cars = [
+            {
+                id: "LL 5611",
+                driverName: "Chikumbuso Banda",
+                licensePlate: "ABC-1234",
+                parcels: [
+                    { id: "12345", recipientName: "Raffiq Mwale", destination: "Mzuzu", status: "Pending" },
+                    { id: "67890", recipientName: "Rhodah Nyirongo", destination: "Lilongwe", status: "In Transit" },
+                ],
+            },
+            {
+                id: "BT 5712",
+                driverName: "Chikondi Phiri",
+                licensePlate: "XYZ-5678",
+                parcels: [
+                    { id: "11223", recipientName: "Alice Chikako", destination: "Kasungu", status: "Delivered" },
+                    { id: "33445", recipientName: "John Banda", destination: "Mzimba", status: "Pending" },
+                ],
+            },
+        ];
+
+        // Reference to the container
+        const carDetailsContainer = document.getElementById("carDetailsContainer");
+
+        // Populate car details with parcels
+        cars.forEach(car => {
+            // Create a container for each car
+            const carContainer = document.createElement("div");
+            carContainer.classList.add("car-container");
+
+            // Car details
+            carContainer.innerHTML = `
+                <h3>Car ID: ${car.id}</h3>
+                <p><strong>Driver Name:</strong> ${car.driverName}</p>
+                <p><strong>License Plate:</strong> ${car.licensePlate}</p>
+                <h4>Parcels</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parcel ID</th>
+                            <th>Recipient Name</th>
+                            <th>Destination</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${car.parcels.map(parcel => `
+                            <tr>
+                                <td>${parcel.id}</td>
+                                <td>${parcel.recipientName}</td>
+                                <td>${parcel.destination}</td>
+                                <td>${parcel.status}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            `;
+
+            // Append car container to the main container
+            carDetailsContainer.appendChild(carContainer);
+        });
+    </script>
+    require="conn.php";
+</body>
+</html>

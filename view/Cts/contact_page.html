@@ -1,0 +1,147 @@
+<!-- 
+<?php
+// Start the session
+session_start();
+
+// Dummy session data for testing (in real case, it would come from login)
+$_SESSION['user_id'] = 1;
+$_SESSION['role'] = 'user';
+
+// Check if session variables are set
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    echo "Unauthorized access!";
+    exit;
+}
+?>
+
+ -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Me</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0fff0; /* Light green background */
+    padding: 20px;
+}
+
+.contact-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: #ffffff; /* White container */
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #228B22; /* Darker green */
+    margin-bottom: 20px;
+}
+
+.contact-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: center;
+    align-items: center;
+}
+
+.contact-image img {
+    max-width: 300px;
+    border-radius: 10px;
+    transition: transform 0.3s;
+}
+
+.contact-image img:hover {
+    transform: scale(1.05);
+}
+
+.contact-image p {
+    text-align: center;
+    margin-top: 10px;
+    color: #555;
+}
+
+.contact-form {
+    flex: 1;
+    min-width: 300px;
+}
+
+.contact-form form {
+    display: flex;
+    flex-direction: column;
+}
+
+.contact-form input,
+.contact-form textarea {
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9fff9;
+}
+
+.contact-form button {
+    padding: 12px;
+    background-color: #32CD32; /* Lime Green */
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.contact-form button:hover {
+    background-color: #228B22; /* Dark Green */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .contact-content {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+    </style>
+</head>
+<body>
+
+<div class="contact-container">
+    <h1>Contact Us</h1>
+
+    <div class="contact-content">
+        <div class="contact-image">
+            <a href="contact-image.jpg" download>
+                <img src="contact-image.jpg" alt="Contact Us">
+            </a>
+            
+        </div>
+
+        <div class="contact-form">
+            <form action="submit_contact.php" method="post">
+                <input type="text" name="name" placeholder="Your Name" required>
+                <input type="email" name="email" placeholder="Your Email" required>
+                <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+                <button type="submit">Send Message</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

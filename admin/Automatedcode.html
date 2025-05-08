@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parcel Pricing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+        }
+        input, select {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #08600b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #08530c;
+        }
+        .output {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .output p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Parcel Pricing</h2>
+        <form id="parcelForm">
+            <label for="customerName">Customer Name:</label>
+            <input type="text" id="customerName" placeholder="Enter Customer Name" required />
+
+            <label for="receiverPhone">Customer's Phone Number:</label>
+            <input type="text" id="customerPhone" placeholder="Enter Customer's Phone Number" required />
+            
+            <label for="receiverName">Receiver's Name:</label>
+            <input type="text" id="receiverName" placeholder="Enter Receiver's Name" required />
+
+            <label for="receiverPhone">Receiver's Phone Number:</label>
+            <input type="text" id="receiverPhone" placeholder="Enter Receiver's Phone Number" required />
+
+            <label for="weight">Parcel Weight (kg):</label>
+            <input type="number" id="weight" placeholder="Enter Parcel Weight (kg)" required />
+            
+            <label for="volume">Parcel Volume (m³):</label>
+            <input type="number" id="volume" placeholder="Enter Parcel Volume (m³)" required />
+            
+            <label for="parcelType">Parcel Type:</label>
+            <select id="parcelType" required>
+                <option value="" disabled selected>Select Parcel Type</option>
+                <option value="standard">Standard</option>
+                <option value="fragile">Fragile</option>
+                <option value="express">Express</option>
+            </select>
+            
+            <button type="submit">Generate</button>
+        </form>
+        <div class="output" id="output" style="display: none;">
+            <p><strong>Customer Code:</strong> <span id="customerCode"></span></p>
+            <p><strong>Parcel Amount:</strong> MWK <span id="parcelAmount"></span></p>
+            <p><strong>Receiver's Name:</strong> <span id="receiverNameOutput"></span></p>
+            <p><strong>Receiver's Phone Number:</strong> <span id="receiverPhoneOutput"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Pricing Constants (MWK)
+        const PRICES = {
+            standard: { perKg: 150, perM3: 200 },
+            fragile: { perKg: 200, perM3: 250 },
+            express: { perKg: 300, perM3: 350 }
+        };
+
+        // Generate unique customer code
+        function generateCustomerCode(name) {
+            const timestamp = Date.now().toString().slice(-5); // Use last 5 digits of timestamp
+            const initials = name
+                .split(" ")
+                .map(word => word.charAt(0).toUpperCase())
+                .join("");
+            return `${initials}${timestamp}`;
+        }
+
+        // Calculate parcel amount
+        function calculateParcelAmount(weight, volume, parcelType) {
+            const pricing = PRICES[parcelType];
+            return weight * pricing.perKg + volume * pricing.perM3;
+        }
+
+        // Handle form submission
+        document.getElementById("parcelForm").addEventListener("submit", function (event) {
+            event.preventDefault(); // Prevent form submission
+
+            const customerName = document.getElementById("customerName").value.trim();
+            const receiverName = document.getElementById("receiverName").value.trim();
+            const receiverPhone = document.getElementById("receiverPhone").value.trim();
+            const weight = parseFloat(document.getElementById("weight").value.trim());
+            const volume = parseFloat(document.getElementById("volume").value.trim());
+            const parcelType = document.getElementById("parcelType").value;
+
+            // Validate inputs
+            if (
+                customerName === "" || 
+                receiverName === "" || 
+                receiverPhone === "" || 
+                isNaN(weight) || 
+                isNaN(volume) || 
+                parcelType === ""
+            ) {
+                alert("Please fill in all fields correctly.");
+                return;
+            }
+
+            // Generate customer code and calculate amount
+            const customerCode = generateCustomerCode(customerName);
+            const parcelAmount = calculateParcelAmount(weight, volume, parcelType);
+
+            // Display the result
+            document.getElementById("customerCode").textContent = customerCode;
+            document.getElementById("parcelAmount").textContent = parcelAmount.toFixed(2);
+            document.getElementById("receiverNameOutput").textContent = receiverName;
+            document.getElementById("receiverPhoneOutput").textContent = receiverPhone;
+            document.getElementById("output").style.display = "block";
+        });
+    </script>
+    require="conn.php";
+</body>
+</html>

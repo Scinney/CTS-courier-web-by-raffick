@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTS PMS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .login-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+        }
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #08600b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #08530c;
+        }
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Track Your Parcel</h2>
+        <form id="loginForm">
+            <input type="text" id="userId" placeholder="Parcel Receipt or ID number" required />
+            <button type="submit">Track</button>
+        </form>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        // Simulated valid IDs
+        const validIds = ["12345", "67890", "abc123"];
+
+        // Function to handle login
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent form submission
+
+            const userId = document.getElementById("userId").value;
+            const messageElement = document.getElementById("message");
+
+            if (validIds.includes(userId)) {
+                console.log(`[SUCCESS] User ID: ${userId} logged in at ${new Date().toLocaleString()}`);
+                messageElement.style.color = "green";
+                messageElement.textContent = "Login successful!";
+            } else {
+                console.log(`[FAILURE] Invalid User ID: ${userId} attempted login at ${new Date().toLocaleString()}`);
+                messageElement.style.color = "red";
+                messageElement.textContent = "Invalid ID. Please try again.";
+            }
+        });
+    </script>
+    require="conn.php";
+</body>
+</html>

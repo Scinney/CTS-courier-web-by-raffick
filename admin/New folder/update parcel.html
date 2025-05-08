@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Parcel Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            max-width: 500px;
+            margin: auto;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 14px;
+            width: 100%;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .message {
+            text-align: center;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Update Parcel Status</h2>
+
+    <?php if ($message): ?>
+        <p class="message"><?php echo $message; ?></p>
+    <?php endif; ?>
+
+    <form method="post">
+        <label>Parcel ID</label>
+        <input type="text" name="parcel_id" required>
+
+        <label>Status</label>
+        <select name="status" required>
+            <option value="Pending">Pending</option>
+            <option value="In Transit">In Transit</option>
+            <option value="Delivered">Delivered</option>
+        </select>
+
+        <button type="submit">Update Status</button>
+    </form>
+</div>
+
+</body>
+</html>

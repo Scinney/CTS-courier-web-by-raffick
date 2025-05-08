@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - CTS Parcel Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .contact-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 400px;
+        }
+        .contact-container h2 {
+            margin-bottom: 20px;
+        }
+        input, textarea {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        textarea {
+            height: 100px;
+            resize: none;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #08600b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #08530c;
+        }
+        #statusMessage {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-container">
+        <h2>Contact Us</h2>
+        <form id="contactForm">
+            <input type="text" id="name" placeholder="Your Name" required />
+            <input type="email" id="email" placeholder="Your Email" required />
+            <input type="text" id="subject" placeholder="Subject" required />
+            <textarea id="message" placeholder="Your Message" required></textarea>
+            <button type="submit">Send Message</button>
+        </form>
+        <p id="statusMessage"></p>
+    </div>
+
+    <script>
+        document.getElementById("contactForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent form submission
+            
+            // Gather form data
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const subject = document.getElementById("subject").value.trim();
+            const message = document.getElementById("message").value.trim();
+            const statusMessage = document.getElementById("statusMessage");
+
+            // Validate inputs
+            if (!name || !email || !subject || !message) {
+                statusMessage.style.color = "red";
+                statusMessage.textContent = "All fields are required.";
+                return;
+            }
+
+            // Simulate sending the message (replace this with backend integration)
+            console.log(`Message sent:
+                Name: ${name}
+                Email: ${email}
+                Subject: ${subject}
+                Message: ${message}
+            `);
+            statusMessage.style.color = "green";
+            statusMessage.textContent = "Your message has been sent successfully!";
+            
+            // Reset form
+            document.getElementById("contactForm").reset();
+        });
+    </script>
+    require="conn.php";
+</body>
+</html>
