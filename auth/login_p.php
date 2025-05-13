@@ -6,8 +6,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Prepare statement to fetch user info
-    $stmt = $conn->prepare("SELECT id, first_name, role, password FROM users WHERE email = ?");
+    // Prepare statement
+    $stmt = $conn->prepare("SELECT id, name AS first_name, role, password FROM users WHERE email = ?");
+    if (!$stmt) {
+        die("Prepare failed: " . $conn->error); // Debug message
+    }
+
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
@@ -19,7 +23,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_result($id, $first_name, $role, $hashed_password);
     $stmt->fetch();
 
-    // Verify password
     if (!password_verify($password, $hashed_password)) {
         die("Invalid email or password.");
     }
@@ -29,10 +32,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $_SESSION['first_name'] = $first_name;
     $_SESSION['role'] = $role;
 
-    // Redirect to respective dashboard based on role
+    // Redirect by role
     switch ($role) {
         case 'admin':
-            header("Location: ../dashboard/admin_dashboard.php");
+            header("Location: ../pages/admin/index.php");
             break;
         case 'branch-admin':
             header("Location: ../dashboard/branch_admin_dashboard.php");

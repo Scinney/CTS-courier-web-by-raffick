@@ -166,7 +166,7 @@ require 'login_p.php';
                         <button type="submit" class="btn">Login</button>
                     </div>
                     <p class="register-text">Don't have an account? <a href="register.php">Register</a></p>
-                    <p class="register-text">Forgot Password? <a href="forgot_password.php">Register</a></p>
+                    <p class="register-text">Forgot Password? <a href="forgot_password.php">click here</a></p>
                 </form>
             </div>
         </div>

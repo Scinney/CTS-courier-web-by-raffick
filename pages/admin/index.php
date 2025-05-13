@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
-    header("Location: admin_home.php");
+    header("Location: index.php");
     exit();
 }
 $first_name = $_SESSION['first_name'];
@@ -82,7 +82,7 @@ $current_section = in_array($section, $allowed_sections) ? $section : 'dashboard
 </head>
 <body>
 
-<?php include 'includes/sidebar.php'; ?>
+<?php include '../includes/sidebar.php'; ?>
 
 <div class="main-content">
     <?php include "sections/{$current_section}.php"; ?>
