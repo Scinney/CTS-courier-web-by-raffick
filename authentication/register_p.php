@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $address = $_POST['address'];
 
     // Validate email uniqueness
-    $checkEmail = $conn->prepare("SELECT email FROM users WHERE email = ?");
+    $checkEmail = $conn->prepare("SELECT email FROM users2 WHERE email = ?");
     $checkEmail->bind_param("s", $email);
     $checkEmail->execute();
     $checkEmail->store_result();
@@ -44,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
     // Insert into users table
-    $stmt = $conn->prepare("INSERT INTO users (first_name, second_name, email, gender, role,  password, phone_number, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO users2 (first_name, second_name, email, gender, role,  password, phone_number, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssssssss", $first_name, $second_name, $email, $gender, $role, $hashed_password, $phone_number, $address);
     
     if ($stmt->execute()) {
