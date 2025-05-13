@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../404.php");
+    header("Location: admin_home.php");
     exit();
 }
 $first_name = $_SESSION['first_name'];
@@ -18,7 +18,7 @@ $current_section = in_array($section, $allowed_sections) ? $section : 'dashboard
     <meta charset="UTF-8">
     <title>CTS Admin Panel</title>
     <style>
-        * {
+    * {
             box-sizing: border-box;
         }
         body {
