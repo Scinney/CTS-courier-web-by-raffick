@@ -1,50 +1,98 @@
 <?php
-include '../db/connection.php'; // Adjust path as needed
+// Include database connection
+include '../db/connection.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize inputs
-    $id           = isset($_POST['user_id']) ? intval($_POST['user_id']) : null;
-    $first_name   = trim($_POST['first_name']);
-    $second_name  = trim($_POST['second_name']); // This maps to 'last_name' in the DB
-    $email        = trim($_POST['email']);
-    $role         = trim($_POST['role']);
-    $password     = isset($_POST['password']) ? $_POST['password'] : null;
+// Ensure connection is valid
+if (!$connection) {
+    die("Connection failed: " . mysqli_connect_error());
+}
 
-    // Validation (basic)
-    if (empty($first_name) || empty($second_name) || empty($email) || empty($role)) {
-        die("Missing required fields.");
+// Validate and sanitize form inputs
+$errors = [];
+$user_id = !empty($_POST['user_id']) ? filter_var($_POST['user_id'], FILTER_VALIDATE_INT) : null;
+$name = trim($_POST['name'] ?? '');
+$surname = trim($_POST['surname'] ?? '');
+$email = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+$phone_number = trim($_POST['phone_number'] ?? '');
+$role = $_POST['role'] ?? '';
+$password = $_POST['password'] ?? '';
+
+// Valid roles from the database enum
+$valid_roles = ['user', 'admin', 'branch-admin', 'receptionist', 'driver'];
+
+// Input validation
+if (empty($name)) {
+    $errors[] = "First name is required";
+}
+if (empty($surname)) {
+    $errors[] = "Last name is required";
+}
+if (!$email) {
+    $errors[] = "Valid email is required";
+}
+if (!in_array($role, $valid_roles)) {
+    $errors[] = "Invalid role selected";
+}
+if ($user_id === null && empty($password)) {
+    $errors[] = "Password is required for new users";
+}
+if (!empty($phone_number) && !preg_match('/^\+?[1-9]\d{1,14}$/', $phone_number)) {
+    $errors[] = "Invalid phone number format";
+}
+
+// Check if email is already in use (excluding the current user if editing)
+if ($email) {
+    $stmt = $connection->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+    $stmt->bind_param('si', $email, $user_id);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows > 0) {
+        $errors[] = "Email is already in use";
     }
+    $stmt->close();
+}
 
-    // If it's a new user
-    if (empty($id)) {
-        if (empty($password)) {
-            die("Password is required for new users.");
-        }
+// If there are errors, redirect back with error messages
+if (!empty($errors)) {
+    session_start();
+    $_SESSION['errors'] = $errors;
+    header("Location: ../index.php?section=users");
+    exit;
+}
 
+// Prepare SQL based on whether it's an insert or update
+if ($user_id) {
+    // Update existing user
+    if (empty($password)) {
+        // Update without changing password
+        $stmt = $connection->prepare("UPDATE users SET name = ?, surname = ?, email = ?, phone_number = ?, role = ? WHERE id = ?");
+        $stmt->bind_param('sssssi', $name, $surname, $email, $phone_number, $role, $user_id);
+    } else {
+        // Update with new password
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-        $stmt = $conn->prepare("INSERT INTO users2 (first_name, last_name, email, role, password, status) VALUES (?, ?, ?, ?, ?, 'active')");
-        $stmt->bind_param("sssss", $first_name, $second_name, $email, $role, $hashed_password);
-    } else {
-        // Update user — password is optional
-        if (!empty($password)) {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("UPDATE users2 SET first_name=?, last_name=?, email=?, role=?, password=? WHERE id=?");
-            $stmt->bind_param("sssssi", $first_name, $second_name, $email, $role, $hashed_password, $id);
-        } else {
-            $stmt = $conn->prepare("UPDATE users2 SET first_name=?, last_name=?, email=?, role=? WHERE id=?");
-            $stmt->bind_param("ssssi", $first_name, $second_name, $email, $role, $id);
-        }
-    }
-
-    if ($stmt->execute()) {
-        header("Location: ../admin_home.php?section=users&status=success");
-        exit();
-    } else {
-        echo "Database error: " . $stmt->error;
+        $stmt = $connection->prepare("UPDATE users SET name = ?, surname = ?, email = ?, phone_number = ?, role = ?, password = ? WHERE id = ?");
+        $stmt->bind_param('ssssssi', $name, $surname, $email, $phone_number, $role, $hashed_password, $user_id);
     }
 } else {
-    header("Location: ../404.php");
-    exit();
+    // Insert new user
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $stmt = $connection->prepare("INSERT INTO users (name, surname, email, phone_number, role, password, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
+    $stmt->bind_param('ssssss', $name, $surname, $email, $phone_number, $role, $hashed_password);
 }
+
+// Execute the query
+if ($stmt->execute()) {
+    session_start();
+    $_SESSION['success'] = $user_id ? "User updated successfully" : "User added successfully";
+} else {
+    session_start();
+    $_SESSION['errors'] = ["Database error: " . $stmt->error];
+}
+
+$stmt->close();
+$connection->close();
+
+// Redirect back to the users page
+header("Location: ../index.php?section=users");
+exit;
 ?>

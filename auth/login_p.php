@@ -7,9 +7,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['password'];
 
     // Prepare statement
-    $stmt = $conn->prepare("SELECT id, name AS first_name, role, password FROM users WHERE email = ?");
+    $stmt = $connection->prepare("SELECT id, name AS first_name, role, password, status FROM users WHERE email = ?");
     if (!$stmt) {
-        die("Prepare failed: " . $conn->error); // Debug message
+        $_SESSION['error'] = "Database error: " . $connection->error;
+        header("Location: login.php");
+        exit();
     }
 
     $stmt->bind_param("s", $email);
@@ -17,14 +19,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->store_result();
 
     if ($stmt->num_rows == 0) {
-        die("Invalid email or password.");
+        $_SESSION['error'] = "Invalid email or password.";
+        header("Location: login.php");
+        exit();
     }
 
-    $stmt->bind_result($id, $first_name, $role, $hashed_password);
+    $stmt->bind_result($id, $first_name, $role, $hashed_password, $status);
     $stmt->fetch();
 
+    // Check if user is suspended or deleted
+    if ($status === 'suspended') {
+        header("Location: suspended.php");
+        exit();
+    }
+    if ($status === 'deleted') {
+        header("Location: deleted.php");
+        exit();
+    }
+
     if (!password_verify($password, $hashed_password)) {
-        die("Invalid email or password.");
+        $_SESSION['error'] = "Invalid email or password.";
+        header("Location: login.php");
+        exit();
     }
 
     // Set session variables
@@ -48,7 +64,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             break;
         case 'user':
         default:
-            header("Location: ../dashboard/user_dashboard.php");
+            header("Location: ../pages/roles/user/index.php");
             break;
     }
     exit();

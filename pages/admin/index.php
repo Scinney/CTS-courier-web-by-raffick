@@ -29,8 +29,7 @@ $current_section = in_array($section, $allowed_sections) ? $section : 'dashboard
         }
         .sidebar {
             width: 220px;
-            background-color: #2b38f0;
-            color: white;
+            background-color: #0077cc; /* CTS blue */
             display: flex;
             flex-direction: column;
             height: 100vh;
@@ -43,7 +42,7 @@ $current_section = in_array($section, $allowed_sections) ? $section : 'dashboard
         .sidebar .profile {
             text-align: center;
             padding: 10px 20px;
-            border-bottom: 1px solid #262ea3;
+            border-bottom: 1px solid #0077cc; /* CTS blue */
         }
         .sidebar .profile h3 {
             margin: 0;
@@ -57,7 +56,7 @@ $current_section = in_array($section, $allowed_sections) ? $section : 'dashboard
             font-weight: bold;
         }
         .sidebar a:hover, .sidebar a.active {
-            background-color: #262ea3;
+            background-color:rgb(37, 47, 182);
         }
         .sidebar .watermark {
             margin-top: auto;
@@ -78,11 +77,26 @@ $current_section = in_array($section, $allowed_sections) ? $section : 'dashboard
             border-radius: 10px;
             margin-bottom: 20px;
         }
+        .alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
 
-<?php include '../includes/sidebar.php'; ?>
+<?php include 'includes/sidebar.php'; ?>
 
 <div class="main-content">
     <?php include "sections/{$current_section}.php"; ?>

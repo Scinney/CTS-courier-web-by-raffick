@@ -30,7 +30,7 @@
     </nav>
 
     <!-- HOME SECTION -->
-    <section id="home" class="content-section active">
+    <section id="home" class="content-section home-section active">
       <div class="home-overlay">
         <div class="home-content">
           <h1>Fast & Reliable Parcel Delivery</h1>

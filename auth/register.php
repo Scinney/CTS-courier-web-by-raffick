@@ -134,7 +134,7 @@ require 'register_p.php';
             <div class="form-actions">
                 <button type="submit" name="submit" class="btn">Register Now</button>
             </div>
-            <p class="register-text">already have an account? <a href="auth/login.php">Login</a></p>
+            <p class="register-text">already have an account? <a href="login.php">Login</a></p>
         </form>
     </div>
 </body>

@@ -20,43 +20,71 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $confirm_password = $_POST['confirm_password'];
     $role = 'user'; // Default role
 
+    // Validate inputs
+    if (empty($name) || empty($surname) || empty($email) || empty($password)) {
+        $_SESSION['error'] = "All required fields must be filled.";
+        header("Location: register.php");
+        exit();
+    }
+
+    // Validate email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['error'] = "Invalid email format.";
+        header("Location: register.php");
+        exit();
+    }
+
     // Validate email uniqueness
     $checkEmail = $conn->prepare("SELECT email FROM users WHERE email = ?");
     if (!$checkEmail) {
-        die("Prepare failed: " . $conn->error);
+        $_SESSION['error'] = "Database error: " . $conn->error;
+        header("Location: register.php");
+        exit();
     }
     $checkEmail->bind_param("s", $email);
     $checkEmail->execute();
     $checkEmail->store_result();
     if ($checkEmail->num_rows > 0) {
-        die("Email is already registered.");
+        header("Location: email_in_use.php");
+        exit();
     }
     $checkEmail->close();
 
     // Validate password
     if ($password !== $confirm_password) {
-        die("Passwords do not match.");
+        $_SESSION['error'] = "Passwords do not match.";
+        header("Location: register.php");
+        exit();
     }
     if (!isStrongPassword($password)) {
-        die("Password must contain at least one uppercase letter, one lowercase letter, one number, one symbol, and be at least 4 characters long.");
+        $_SESSION['error'] = "Password must contain at least one uppercase letter, one lowercase letter, one number, one symbol, and be at least 4 characters long.";
+        header("Location: register.php");
+        exit();
     }
 
     // Hash password
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
     // Insert into users table
-    $stmt = $conn->prepare("INSERT INTO users (name, surname, email, password, phone_number, role) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO users (name, surname, email, password, phone_number, role, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
     if (!$stmt) {
-        die("Prepare failed: " . $conn->error);
+        $_SESSION['error'] = "Database error: " . $conn->error;
+        header("Location: register.php");
+        exit();
     }
     $stmt->bind_param("ssssss", $name, $surname, $email, $hashed_password, $phone_number, $role);
 
     if ($stmt->execute()) {
         // Registration successful
-        header("Location: ../dashboard/user_dashboard.php");
+        $_SESSION['user_id'] = $stmt->insert_id;
+        $_SESSION['first_name'] = $name;
+        $_SESSION['role'] = $role;
+        header("Location: ../pages/roles/user/index.php");
         exit();
     } else {
-        echo "Error: " . $stmt->error;
+        $_SESSION['error'] = "Registration failed: " . $stmt->error;
+        header("Location: register.php");
+        exit();
     }
 
     $stmt->close();
