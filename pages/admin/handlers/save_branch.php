@@ -3,47 +3,55 @@
 include '../db/connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
-    $city = filter_input(INPUT_POST, 'city', FILTER_SANITIZE_STRING);
-    $contact_number = filter_input(INPUT_POST, 'contact_number', FILTER_SANITIZE_STRING);
-    $address = filter_input(INPUT_POST, 'address', FILTER_SANITIZE_STRING);
-    $is_operational = isset($_POST['is_operational']) ? 1 : 0;
+    $branchID = filter_input(INPUT_POST, 'BranchID', FILTER_VALIDATE_INT) ?: 0;
+    $name = filter_input(INPUT_POST, 'Name', FILTER_SANITIZE_STRING);
+    $city = filter_input(INPUT_POST, 'City', FILTER_SANITIZE_STRING);
+    $citySide = filter_input(INPUT_POST, 'CitySide', FILTER_SANITIZE_STRING);
+    $contactNumber = filter_input(INPUT_POST, 'ContactNumber', FILTER_SANITIZE_STRING);
+    $address = filter_input(INPUT_POST, 'Address', FILTER_SANITIZE_STRING);
+    $operational = isset($_POST['Operational']) ? 1 : 0;
 
     // Validate required fields
-    if (!$name || !$city || !$contact_number || !$address) {
+    if (!$name || !$city || !$contactNumber || !$address) {
         http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'All fields are required.']);
+        echo json_encode(['status' => 'error', 'message' => 'Name, City, Contact Number, and Address are required.']);
         exit;
     }
 
-    // Validate city
-    $valid_cities = ['Lilongwe', 'Blantyre', 'Mzuzu'];
-    if (!in_array($city, $valid_cities)) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Invalid city selected.']);
-        exit;
-    }
-
-    // Validate contact number
-    if (!preg_match('/^0[89][0-9]{8}$/', $contact_number)) {
+    // Validate contact number (Malawi format: 09 or 08 followed by 8 digits)
+    if (!preg_match('/^0[89][0-9]{8}$/', $contactNumber)) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Invalid contact number format.']);
         exit;
     }
 
+    // Validate city (optional: restrict to predefined list)
+    $validCities = ['Lilongwe', 'Blantyre', 'Mzuzu'];
+    if (!in_array($city, $validCities)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid city. Must be Lilongwe, Blantyre, or Mzuzu.']);
+        exit;
+    }
+
     try {
-        if ($id > 0) {
-            $stmt = $conn->prepare("UPDATE branches SET name = ?, city = ?, contact_number = ?, address = ?, is_operational = ?, updated_at = NOW() WHERE id = ?");
-            $stmt->bind_param("ssssi", $name, $city, $contact_number, $address, $is_operational, $id);
+        if ($branchID > 0) {
+            // Update existing branch
+            $stmt = $connection->prepare("
+                UPDATE Branches SET Name = ?, City = ?, CitySide = ?, ContactNumber = ?, Address = ?, Operational = ?, UpdatedAt = NOW()
+                WHERE BranchID = ?
+            ");
+            $stmt->bind_param("sssssii", $name, $city, $citySide, $contactNumber, $address, $operational, $branchID);
         } else {
-            $stmt = $conn->prepare("INSERT INTO branches (name, city, contact_number, address, is_operational, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())");
-            $stmt->bind_param("ssssi", $name, $city, $contact_number, $address, $is_operational);
+            // Insert new branch
+            $stmt = $connection->prepare("
+                INSERT INTO Branches (Name, City, CitySide, ContactNumber, Address, Operational, CreatedAt, UpdatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ");
+            $stmt->bind_param("sssssi", $name, $city, $citySide, $contactNumber, $address, $operational);
         }
 
         if ($stmt->execute()) {
-            $new_id = $id > 0 ? $id : $conn->insert_id;
-            echo json_encode(['status' => 'success', 'message' => 'Branch saved successfully.', 'id' => $new_id]);
+            echo json_encode(['status' => 'success', 'message' => 'Branch saved successfully.', 'BranchID' => $branchID ?: $connection->insert_id]);
         } else {
             throw new Exception('Failed to save branch.');
         }
@@ -54,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
     }
 
-    $conn->close();
+    $connection->close();
 } else {
     http_response_code(405);
     echo json_encode(['status' => 'error', 'message' => 'Method not allowed.']);

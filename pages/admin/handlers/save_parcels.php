@@ -3,35 +3,35 @@
 include '../db/connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    $parcel_id = filter_input(INPUT_POST, 'parcel_id', FILTER_SANITIZE_STRING);
-    $sender_name = filter_input(INPUT_POST, 'sender_name', FILTER_SANITIZE_STRING);
-    $sender_branch_id = filter_input(INPUT_POST, 'sender_branch_id', FILTER_VALIDATE_INT);
-    $sender_contact = filter_input(INPUT_POST, 'sender_contact', FILTER_SANITIZE_STRING);
-    $receiver_name = filter_input(INPUT_POST, 'receiver_name', FILTER_SANITIZE_STRING);
-    $receiver_branch_id = filter_input(INPUT_POST, 'receiver_branch_id', FILTER_VALIDATE_INT);
-    $receiver_contact = filter_input(INPUT_POST, 'receiver_contact', FILTER_SANITIZE_STRING);
-    $weight = filter_input(INPUT_POST, 'weight', FILTER_VALIDATE_FLOAT);
-    $declared_value = filter_input(INPUT_POST, 'declared_value', FILTER_VALIDATE_FLOAT);
-    $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING) ?: 'In Transit';
+    $parcelID = filter_input(INPUT_POST, 'ParcelID', FILTER_SANITIZE_STRING);
+    $sender = filter_input(INPUT_POST, 'Sender', FILTER_SANITIZE_STRING);
+    $senderBranchID = filter_input(INPUT_POST, 'SenderBranchID', FILTER_VALIDATE_INT);
+    $senderContact = filter_input(INPUT_POST, 'SenderContact', FILTER_SANITIZE_STRING);
+    $receiver = filter_input(INPUT_POST, 'Receiver', FILTER_SANITIZE_STRING);
+    $receiverBranchID = filter_input(INPUT_POST, 'ReceiverBranchID', FILTER_VALIDATE_INT);
+    $receiverContact = filter_input(INPUT_POST, 'ReceiverContact', FILTER_SANITIZE_STRING);
+    $weightKg = filter_input(INPUT_POST, 'WeightKg', FILTER_VALIDATE_FLOAT);
+    $declaredValueMWK = filter_input(INPUT_POST, 'DeclaredValueMWK', FILTER_VALIDATE_FLOAT);
+    $paymentStatusID = filter_input(INPUT_POST, 'PaymentStatusID', FILTER_VALIDATE_INT);
+    $deliveryStatusID = filter_input(INPUT_POST, 'DeliveryStatusID', FILTER_VALIDATE_INT);
 
     // Validate required fields
-    if (!$parcel_id || !$sender_name || !$sender_branch_id || !$sender_contact || !$receiver_name || !$receiver_branch_id || !$receiver_contact || !$weight || !$declared_value) {
+    if (!$sender || !$senderBranchID || !$senderContact || !$receiver || !$receiverBranchID || !$receiverContact || !$weightKg || !$declaredValueMWK || !$paymentStatusID || !$deliveryStatusID) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'All fields are required.']);
         exit;
     }
 
     // Validate weight and declared value
-    if ($weight <= 0 || $declared_value < 0) {
+    if ($weightKg <= 0 || $declaredValueMWK < 0) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Weight must be positive and declared value cannot be negative.']);
         exit;
     }
 
     // Validate branch IDs
-    $stmt = $conn->prepare("SELECT id FROM branches WHERE id IN (?, ?) AND is_operational = 1");
-    $stmt->bind_param("ii", $sender_branch_id, $receiver_branch_id);
+    $stmt = $connection->prepare("SELECT BranchID FROM Branches WHERE BranchID IN (?, ?) AND Operational = 1");
+    $stmt->bind_param("ii", $senderBranchID, $receiverBranchID);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result->num_rows !== 2) {
@@ -42,32 +42,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
 
     // Validate contact numbers (Malawi format: 09 or 08 followed by 8 digits)
-    if (!preg_match('/^0[89][0-9]{8}$/', $sender_contact) || !preg_match('/^0[89][0-9]{8}$/', $receiver_contact)) {
+    if (!preg_match('/^0[89][0-9]{8}$/', $senderContact) || !preg_match('/^0[89][0-9]{8}$/', $receiverContact)) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Invalid contact number format.']);
         exit;
     }
 
-    // Validate status
-    $valid_statuses = ['In Transit', 'Out for Delivery', 'Delivered', 'Returned'];
-    if ($status && !in_array($status, $valid_statuses)) {
+    // Validate payment and delivery status IDs
+    $stmt = $connection->prepare("SELECT PaymentStatusID FROM Payment WHERE PaymentStatusID = ?");
+    $stmt->bind_param("i", $paymentStatusID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows !== 1) {
         http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Invalid status value.']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid payment status.']);
         exit;
+    }
+    $stmt->close();
+
+    $stmt = $connection->prepare("SELECT DeliveryStatusID FROM DeliveryStatus WHERE DeliveryStatusID = ?");
+    $stmt->bind_param("i", $deliveryStatusID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows !== 1) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid delivery status.']);
+        exit;
+    }
+    $stmt->close();
+
+    // Generate ParcelID for new parcels
+    if (empty($parcelID)) {
+        $timestamp = date('YmdHis');
+        $random = sprintf("%04d", rand(0, 9999));
+        $parcelID = "PARC-$timestamp-$random";
     }
 
     try {
-        if ($id > 0) {
-            $stmt = $conn->prepare("UPDATE parcels SET parcel_id = ?, sender_name = ?, sender_branch_id = ?, sender_contact = ?, receiver_name = ?, receiver_branch_id = ?, receiver_contact = ?, weight = ?, declared_value = ?, status = ?, updated_at = NOW() WHERE id = ?");
-            $stmt->bind_param("ssissssdssi", $parcel_id, $sender_name, $sender_branch_id, $sender_contact, $receiver_name, $receiver_branch_id, $receiver_contact, $weight, $declared_value, $status, $id);
-        } else {
-            $stmt = $conn->prepare("INSERT INTO parcels (parcel_id, sender_name, sender_branch_id, sender_contact, receiver_name, receiver_branch_id, receiver_contact, weight, declared_value, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
-            $stmt->bind_param("ssissssdss", $parcel_id, $sender_name, $sender_branch_id, $sender_contact, $receiver_name, $receiver_branch_id, $receiver_contact, $weight, $declared_value, $status);
-        }
+        // Use INSERT ... ON DUPLICATE KEY UPDATE to handle both insert and update
+        $stmt = $connection->prepare("
+            INSERT INTO Parcels (ParcelID, Sender, SenderBranchID, SenderContact, Receiver, ReceiverBranchID, ReceiverContact, WeightKg, DeclaredValueMWK, PaymentStatusID, DeliveryStatusID, CreatedAt, UpdatedAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE
+                Sender = ?, SenderBranchID = ?, SenderContact = ?, Receiver = ?, ReceiverBranchID = ?, ReceiverContact = ?, WeightKg = ?, DeclaredValueMWK = ?, PaymentStatusID = ?, DeliveryStatusID = ?, UpdatedAt = NOW()
+        ");
+        $stmt->bind_param(
+            "ssisssisdiissssisdii",
+            $parcelID, $sender, $senderBranchID, $senderContact, $receiver, $receiverBranchID, $receiverContact, $weightKg, $declaredValueMWK, $paymentStatusID, $deliveryStatusID,
+            $sender, $senderBranchID, $senderContact, $receiver, $receiverBranchID, $receiverContact, $weightKg, $declaredValueMWK, $paymentStatusID, $deliveryStatusID
+        );
 
         if ($stmt->execute()) {
-            $new_id = $id > 0 ? $id : $conn->insert_id;
-            echo json_encode(['status' => 'success', 'message' => 'Parcel saved successfully.', 'id' => $new_id]);
+            echo json_encode(['status' => 'success', 'message' => 'Parcel saved successfully.', 'ParcelID' => $parcelID]);
         } else {
             throw new Exception('Failed to save parcel.');
         }
@@ -78,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
     }
 
-    $conn->close();
+    $connection->close();
 } else {
     http_response_code(405);
     echo json_encode(['status' => 'error', 'message' => 'Method not allowed.']);

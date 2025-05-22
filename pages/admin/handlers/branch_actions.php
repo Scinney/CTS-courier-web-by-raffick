@@ -3,59 +3,49 @@
 include '../db/connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = isset($_POST['action']) ? $_POST['action'] : '';
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    $branchID = filter_input(INPUT_POST, 'BranchID', FILTER_VALIDATE_INT);
+    $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
 
-    if (!$action || !$id) {
+    if ($action !== 'delete' || !$branchID) {
         http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Action and branch ID are required.']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid action or BranchID.']);
         exit;
     }
 
     try {
-        if ($action === 'delete') {
-            // Check if the branch exists
-            $checkStmt = $conn->prepare("SELECT id FROM branches WHERE id = ?");
-            if ($checkStmt === false) {
-                throw new Exception("Check prepare failed: " . $conn->error);
-            }
-            $checkStmt->bind_param("i", $id);
-            $checkStmt->execute();
-            $result = $checkStmt->get_result();
-            if ($result->num_rows === 0) {
-                throw new Exception("Branch not found.");
-            }
-            $checkStmt->close();
-
-            // Check for active parcels (not archived or deleted)
-            $stmt = $conn->prepare("DELETE FROM branches WHERE id = ? AND id NOT IN (SELECT sender_branch_id FROM parcels WHERE status NOT IN ('archived', 'deleted') UNION SELECT receiver_branch_id FROM parcels WHERE status NOT IN ('archived', 'deleted'))");
-            if ($stmt === false) {
-                throw new Exception("Prepare failed: " . $conn->error);
-            }
-            $stmt->bind_param("i", $id);
-
-            if (!$stmt->execute()) {
-                throw new Exception("Execute failed: " . $stmt->error);
-            }
-
-            if ($stmt->affected_rows > 0) {
-                echo json_encode(['status' => 'success', 'message' => 'Branch deleted successfully.']);
-            } else {
-                echo json_encode(['status' => 'error', 'message' => 'Cannot delete branch with active parcels.']);
-            }
-
-            $stmt->close();
-        } else {
+        // Check if branch is referenced by parcels
+        $stmt = $connection->prepare("
+            SELECT COUNT(*) as count 
+            FROM Parcels 
+            WHERE SenderBranchID = ? OR ReceiverBranchID = ?
+        ");
+        $stmt->bind_param("ii", $branchID, $branchID);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        if ($row['count'] > 0) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Invalid action.']);
+            echo json_encode(['status' => 'error', 'message' => 'Cannot delete branch; it is referenced by parcels.']);
+            exit;
         }
+        $stmt->close();
+
+        // Delete branch
+        $stmt = $connection->prepare("DELETE FROM Branches WHERE BranchID = ?");
+        $stmt->bind_param("i", $branchID);
+        if ($stmt->execute()) {
+            echo json_encode(['status' => 'success', 'message' => 'Branch deleted successfully.']);
+        } else {
+            throw new Exception('Failed to delete branch.');
+        }
+
+        $stmt->close();
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Branch action error: " . $e->getMessage());
-        echo json_encode(['status' => 'error', 'message' => 'Server error: ' . $e->getMessage()]);
+        echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
     }
 
-    $conn->close();
+    $connection->close();
 } else {
     http_response_code(405);
     echo json_encode(['status' => 'error', 'message' => 'Method not allowed.']);

@@ -1,4 +1,4 @@
-<!-- branch.php -->
+<!-- branches.php -->
 <div class="card">
     <div class="user-management-header">
         <h2>Branch Management</h2>
@@ -9,6 +9,7 @@
             <tr>
                 <th>Name</th>
                 <th>City</th>
+                <th>City Side</th>
                 <th>Contact Number</th>
                 <th>Address</th>
                 <th>Operational</th>
@@ -19,37 +20,41 @@
             <?php
             include './db/connection.php';
 
-            $branches = $conn->query("SELECT * FROM branches");
+            $branches = $connection->query("SELECT * FROM Branches");
 
             while ($row = $branches->fetch_assoc()) {
-                $name = htmlspecialchars($row['name'], ENT_QUOTES);
-                $city = htmlspecialchars($row['city'], ENT_QUOTES);
-                $contactNumber = htmlspecialchars($row['contact_number'], ENT_QUOTES);
-                $address = htmlspecialchars($row['address'], ENT_QUOTES);
-                $isOperational = $row['is_operational'] ? 'Yes' : 'No';
+                $branchId = htmlspecialchars($row['BranchID'], ENT_QUOTES);
+                $name = htmlspecialchars($row['Name'], ENT_QUOTES);
+                $city = htmlspecialchars($row['City'], ENT_QUOTES);
+                $citySide = htmlspecialchars($row['CitySide'], ENT_QUOTES);
+                $contactNumber = htmlspecialchars($row['ContactNumber'], ENT_QUOTES);
+                $address = htmlspecialchars($row['Address'], ENT_QUOTES);
+                $operational = $row['Operational'] ? 'Yes' : 'No';
 
                 $branchJson = htmlspecialchars(json_encode([
-                    'id' => $row['id'],
-                    'name' => $row['name'],
-                    'city' => $row['city'],
-                    'contact_number' => $row['contact_number'],
-                    'address' => $row['address'],
-                    'is_operational' => $row['is_operational']
+                    'BranchID' => $row['BranchID'],
+                    'Name' => $row['Name'],
+                    'City' => $row['City'],
+                    'CitySide' => $row['CitySide'],
+                    'ContactNumber' => $row['ContactNumber'],
+                    'Address' => $row['Address'],
+                    'Operational' => $row['Operational']
                 ]), ENT_QUOTES);
 
                 echo "<tr>
                         <td>{$name}</td>
                         <td>{$city}</td>
+                        <td>{$citySide}</td>
                         <td>{$contactNumber}</td>
                         <td>{$address}</td>
-                        <td>{$isOperational}</td>
+                        <td>{$operational}</td>
                         <td>
                             <button class='btn btn-warning edit-branch-btn' data-branch='{$branchJson}'>Edit</button>
-                            <button class='btn btn-danger delete-branch-btn' data-id='{$row['id']}'>Delete</button>
+                            <button class='btn btn-danger delete-branch-btn' data-id='{$branchId}'>Delete</button>
                         </td>
                       </tr>";
             }
-            $conn->close();
+            $connection->close();
             ?>
         </tbody>
     </table>
@@ -63,14 +68,14 @@
             <h3 id="branch-modal-title">Add Branch</h3>
         </div>
         <form id="branch-form" method="post" action="handlers/save_branch.php">
-            <input type="hidden" name="id" id="branch-id">
+            <input type="hidden" name="BranchID" id="branch-id">
             <div class="form-group">
                 <label for="branch_name">Branch Name:</label>
-                <input type="text" name="name" id="branch_name" class="form-control" required placeholder="e.g., Lilongwe North Branch">
+                <input type="text" name="Name" id="branch_name" class="form-control" required placeholder="e.g., Lilongwe North Branch">
             </div>
             <div class="form-group">
                 <label for="branch_city">City:</label>
-                <select name="city" id="branch_city" class="form-control" required>
+                <select name="City" id="branch_city" class="form-control" required>
                     <option value="">Select City</option>
                     <option value="Lilongwe">Lilongwe</option>
                     <option value="Blantyre">Blantyre</option>
@@ -78,16 +83,20 @@
                 </select>
             </div>
             <div class="form-group">
+                <label for="branch_city_side">City Side:</label>
+                <input type="text" name="CitySide" id="branch_city_side" class="form-control" placeholder="e.g., North">
+            </div>
+            <div class="form-group">
                 <label for="branch_contact">Contact Number:</label>
-                <input type="text" name="contact_number" id="branch_contact" class="form-control" required placeholder="e.g., 0999555666">
+                <input type="text" name="ContactNumber" id="branch_contact" class="form-control" required placeholder="e.g., 0999555666">
             </div>
             <div class="form-group">
                 <label for="branch_address">Address:</label>
-                <input type="text" name="address" id="branch_address" class="form-control" required placeholder="e.g., P.O. Box 100, City Centre">
+                <input type="text" name="Address" id="branch_address" class="form-control" required placeholder="e.g., P.O. Box 100, City Centre">
             </div>
             <div class="form-group">
-                <label for="is_operational">Operational:</label>
-                <input type="checkbox" name="is_operational" id="is_operational" value="1" checked>
+                <label for="operational">Operational:</label>
+                <input type="checkbox" name="Operational" id="operational" value="1" checked>
             </div>
             <button type="submit" class="btn btn-success">Save Branch</button>
         </form>
@@ -99,7 +108,7 @@
         document.getElementById('branch-form').reset();
         document.getElementById('branch-modal-title').innerText = 'Add Branch';
         document.getElementById('branch-id').value = '';
-        document.getElementById('is_operational').checked = true;
+        document.getElementById('operational').checked = true;
         document.getElementById('branchModal').style.display = 'flex';
     }
 
@@ -121,12 +130,13 @@
             button.addEventListener('click', function () {
                 const branchData = JSON.parse(this.dataset.branch);
                 document.getElementById('branch-modal-title').innerText = 'Edit Branch';
-                document.getElementById('branch-id').value = branchData.id;
-                document.getElementById('branch_name').value = branchData.name;
-                document.getElementById('branch_city').value = branchData.city;
-                document.getElementById('branch_contact').value = branchData.contact_number;
-                document.getElementById('branch_address').value = branchData.address;
-                document.getElementById('is_operational').checked = branchData.is_operational == 1;
+                document.getElementById('branch-id').value = branchData.BranchID;
+                document.getElementById('branch_name').value = branchData.Name;
+                document.getElementById('branch_city').value = branchData.City;
+                document.getElementById('branch_city_side').value = branchData.CitySide;
+                document.getElementById('branch_contact').value = branchData.ContactNumber;
+                document.getElementById('branch_address').value = branchData.Address;
+                document.getElementById('operational').checked = branchData.Operational == 1;
                 document.getElementById('branchModal').style.display = 'flex';
             });
         });
@@ -140,7 +150,7 @@
                     fetch(`handlers/branch_action.php`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                        body: `id=${branchId}&action=delete`
+                        body: `BranchID=${branchId}&action=delete`
                     })
                     .then(response => {
                         if (!response.ok) {

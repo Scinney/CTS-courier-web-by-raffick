@@ -35,9 +35,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Validate email uniqueness
-    $checkEmail = $conn->prepare("SELECT email FROM users WHERE email = ?");
+    $checkEmail = $connection->prepare("SELECT email FROM users WHERE email = ?");
     if (!$checkEmail) {
-        $_SESSION['error'] = "Database error: " . $conn->error;
+        $_SESSION['error'] = "Database error: " . $connection->error;
         header("Location: register.php");
         exit();
     }
@@ -66,9 +66,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
     // Insert into users table
-    $stmt = $conn->prepare("INSERT INTO users (name, surname, email, password, phone_number, role, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
+    $stmt = $connection->prepare("INSERT INTO users (name, surname, email, password, phone_number, role, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
     if (!$stmt) {
-        $_SESSION['error'] = "Database error: " . $conn->error;
+        $_SESSION['error'] = "Database error: " . $connection->error;
         header("Location: register.php");
         exit();
     }
